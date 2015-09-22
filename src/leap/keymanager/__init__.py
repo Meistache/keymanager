@@ -161,7 +161,7 @@ class KeyManager(object):
 
         if self._ca_cert_path == leap_ca_bundle:
             return self._ca_cert_path   # don't merge file with itself
-        elif self._ca_cert_path is None:
+        elif not self._ca_cert_path:
             return leap_ca_bundle
 
         tmp_file = tempfile.NamedTemporaryFile(delete=False)  # delete when keymanager expires
