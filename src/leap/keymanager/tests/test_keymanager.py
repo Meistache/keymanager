@@ -33,10 +33,12 @@ from leap.keymanager import (
     KeyAddressMismatch,
     errors
 )
-from leap.keymanager.openpgp import OpenPGPKey
+from leap.keymanager.openpgp import OpenPGPKey, OpenPGPScheme
 from leap.keymanager.keys import (
     is_address,
     build_key_from_dict,
+    KEY_ADDRESS_KEY,
+    KEY_ID_KEY,
 )
 from leap.keymanager.validation import ValidationLevels
 from leap.keymanager.tests import (
@@ -424,6 +426,33 @@ class KeyManagerCryptoTestCase(KeyManagerWithSoledadTestCase):
         key = yield km.get_key(ADDRESS_2, OpenPGPKey, private=False,
                                fetch_remote=False)
         self.assertEqual(signingkey.fingerprint, key.fingerprint)
+
+        print 'soledad is: %s' % km._soledad
+        _, docs = yield km._soledad.get_all_docs()
+        for doc in docs:
+            print '%s\n' % doc
+
+        idxs = yield self._soledad.list_indexes()
+        for idx in idxs:
+            print idx
+
+        idx_keys = yield self._soledad.get_index_keys(u'by-type-address-private')
+        for k in idx_keys:
+            if k[0] == u'OpenPGPKey-active' and k[2] == u'0':
+                result = yield self._soledad.get_from_index(u'by-type-address-private', *k)
+                print k
+                print result
+
+        yield self._assert_key_id_belongs_to_email('2F455E2824D18DDF', ADDRESS)
+        yield self._assert_key_id_belongs_to_email('7F9DFA687FEE575A', ADDRESS_2)
+
+    @inlineCallbacks
+    def _assert_key_id_belongs_to_email(self, key_id, email):
+        entries = yield self._soledad.get_from_index(u'by-type-address-private',OpenPGPScheme.ACTIVE_TYPE, email, '0')
+
+        self.assertEqual(1, len(entries))
+        self.assertEqual(email, entries[0].content[KEY_ADDRESS_KEY])
+        self.assertEqual(key_id, entries[0].content[KEY_ID_KEY])
 
     @inlineCallbacks
     def test_keymanager_openpgp_encrypt_decrypt_wrong_sign(self):
