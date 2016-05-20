@@ -19,6 +19,10 @@ Use trial to run the test suite::
 
   trial leap.keymanager
 
+Note: If you are on mac, make sure you have /usr/bin/gpg either as an executable or a symlink to it.
+
+  ln -s [physical path] /usr/bin/gpg
+
 License
 =======
 
